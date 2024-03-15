@@ -14,7 +14,7 @@
     {
       "groupName": "apps (npm)",
       "matchFileNames": [
-        "packages/**/package.json"
+        "apps/**/package.json"
       ]
     },
     {
