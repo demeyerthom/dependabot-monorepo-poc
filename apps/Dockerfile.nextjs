@@ -1,6 +1,6 @@
 ###
 # Builder handles setting up a pruned workspace for the component
-FROM node:20.5-bullseye-slim AS builder
+FROM node:20.11-bullseye-slim AS builder
 
 ARG TURBO_VERSION=1.9.2
 ARG SITE_NAME
@@ -18,7 +18,7 @@ RUN pnpm turbo prune --scope=${SITE_NAME} --docker
 
 ##
 # Installer handles installing dependencies based on pruned workspace
-FROM node:20.5-bullseye AS installer
+FROM node:20.11-bullseye AS installer
 
 ARG API_URL_PUBLIC
 ARG API_URL_INTERNAL
@@ -57,7 +57,7 @@ RUN pnpm turbo run build --filter=${SITE_NAME}...
 
 ##
 # Runner handles running the component
-FROM node:20.5-bullseye-slim AS runner
+FROM node:20.11-bullseye-slim AS runner
 ARG SITE_NAME
 ARG SENTRY_RELEASE
 ARG HTTP_PORT=4000
