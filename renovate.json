@@ -2,9 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "onboarding": false,
   "requireConfig": "required",
-  "repositories": [
-    "demeyerthom/dependabot-monorepo-poc"
-  ],
   "extends": [
     "config:recommended",
     "monorepo:turbo"
@@ -14,15 +11,15 @@
   ],
   "packageRules": [
     {
-      "groupName": "Shared",
+      "groupName": "packages (npm)",
       "matchFileNames": [
-        "packages/**"
+        "packages/**/package.json"
       ]
     },
     {
-      "groupName": "Apps packages",
+      "groupName": "apps (npm",
       "matchFileNames": [
-        "apps/**"
+        "packages/**/package.json"
       ]
     }
   ]
