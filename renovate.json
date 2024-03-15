@@ -1,0 +1,33 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "monorepo:turbo"
+  ],
+  "packageRules": [
+    {
+      "groupName": "packages (npm)",
+      "matchFileNames": [
+        "packages/**/package.json"
+      ]
+    },
+    {
+      "groupName": "apps (npm)",
+      "matchFileNames": [
+        "packages/**/package.json"
+      ]
+    },
+    {
+      "groupName": "apps (terraform)",
+      "matchFileNames": [
+        "apps/**/terraform/*.tf"
+      ]
+    },
+    {
+      "groupName": "apps (docker)",
+      "matchFileNames": [
+        "apps/Dockerfile.nextjs"
+      ]
+    }
+  ]
+}

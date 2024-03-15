@@ -1,0 +1,114 @@
+###
+# Builder handles setting up a pruned workspace for the component
+FROM node:20.1-bullseye-slim AS builder
+
+ARG TURBO_VERSION=1.9.2
+ARG SITE_NAME
+ENV SITE_NAME="${SITE_NAME}"
+
+RUN corepack enable pnpm
+RUN corepack prepare pnpm@8.6.1 --activate
+RUN pnpm config set store-dir /pnpm-store
+
+WORKDIR /app
+
+RUN pnpm install turbo@${TURBO_VERSION}
+COPY . .
+RUN pnpm turbo prune --scope=${SITE_NAME} --docker
+
+##
+# Installer handles installing dependencies based on pruned workspace
+FROM node:20.5-bullseye AS installer
+
+ARG API_URL_PUBLIC
+ARG API_URL_INTERNAL
+
+ENV CLIENT_API_GATEWAY_URL=${API_URL_PUBLIC:-"https://graphql-gateway-jxfwsnsz2a-ez.a.run.app"}
+ENV SERVER_API_GATEWAY_URL=${API_URL_PUBLIC:-"https://graphql-gateway-jxfwsnsz2a-ez.a.run.app"}
+
+ARG SITE_NAME
+ENV SITE_NAME="${SITE_NAME}"
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN corepack enable pnpm
+RUN corepack prepare pnpm@8.6.1 --activate
+
+# Add user so that we run as non-root
+RUN groupadd app && useradd -g app app
+RUN mkdir /app/ /dist/ /home/app /pnpm-store && chown app:app /app/ /dist/ /home/app /pnpm-store
+
+WORKDIR /app
+
+# This is user specific, so after USER
+RUN pnpm config set store-dir /pnpm-store
+
+# First install the dependencies (as they change less often)
+COPY .gitignore .gitignore
+COPY --from=builder --chown=app:app /app/out/json/ .
+COPY --from=builder --chown=app:app /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN pnpm fetch
+RUN pnpm install --offline --frozen-lockfile --ignore-scripts
+
+# Build the project
+COPY --from=builder --chown=app:app /app/out/full/ .
+COPY turbo.json turbo.json
+
+RUN pnpm turbo run build --filter=${SITE_NAME}...
+
+##
+# Runner handles running the component
+FROM node:20.5-bullseye-slim AS runner
+ARG SITE_NAME
+ARG SENTRY_RELEASE
+ARG HTTP_PORT=4000
+ARG API_URL_PUBLIC
+ARG API_URL_INTERNAL
+
+ENV CLIENT_API_GATEWAY_URL=${API_URL_PUBLIC:-"https://graphql-gateway-jxfwsnsz2a-ez.a.run.app"}
+ENV SERVER_API_GATEWAY_URL=${API_URL_PUBLIC:-"https://graphql-gateway-jxfwsnsz2a-ez.a.run.app"}
+
+ENV PORT=${HTTP_PORT}
+ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV production
+ENV SENTRY_RELEASE=${SENTRY_RELEASE}
+ENV SITE_NAME=${SITE_NAME}
+ENV HOSTNAME 0.0.0.0
+
+# Default Keep Alive Timeout in NextJS is 10 seconds. We need more then 60
+# seconds as documented by AWS
+ENV KEEP_ALIVE_TIMEOUT 120
+ENV __NEXT_PRIVATE_PREBUNDLED_REACT=next
+
+# Needed for sentry-cli
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates dumb-init
+
+# Add user so that we run as non-root
+RUN groupadd app && useradd -g app app
+
+# Create writable dir
+RUN mkdir /app/ /home/app && chown app:app /app/ /home/app
+
+# Switch to app user
+USER app
+WORKDIR /app
+
+WORKDIR /app/frontend/sites/${SITE_NAME}
+
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=installer --chown=app:app /app/frontend/sites/${SITE_NAME}/.next/standalone /app/
+COPY --from=installer --chown=app:app /app/frontend/sites/${SITE_NAME}/.next/static ./.next/static/
+COPY --from=installer --chown=app:app /app/frontend/sites/${SITE_NAME}/public ./public
+
+COPY --from=installer /app/frontend/sites/${SITE_NAME}/next.config.mjs .
+COPY --from=installer /app/frontend/sites/${SITE_NAME}/package.json .
+
+EXPOSE $HTTP_PORT
+
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+HEALTHCHECK CMD curl --fail http://localhost:$HTTP_PORT/api/healthcheck || exit 1
+
+CMD ["node", "./server.js"]
