@@ -29,4 +29,5 @@ jobs:
         with:
           configurationFile: renovate.json
           token: ${{ secrets.RENOVATE_TOKEN }}
-          renovate-version: latest
+          onboarding: false,
+          requireConfig: false
