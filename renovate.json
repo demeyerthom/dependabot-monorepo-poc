@@ -8,20 +8,17 @@
     "config:recommended",
     "monorepo:turbo"
   ],
-  "baseBranches": [
-    "main"
-  ],
   "packageRules": [
     {
-      "groupName": "packages (npm)",
+      "groupName": "packages",
       "matchFileNames": [
-        "packages/**/package.json"
+        "packages/**"
       ]
     },
     {
-      "groupName": "apps (npm",
+      "groupName": "apps",
       "matchFileNames": [
-        "packages/**/package.json"
+        "packages/**"
       ]
     }
   ]
