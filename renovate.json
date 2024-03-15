@@ -1,5 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "onboarding": false,
+  "requireConfig": "required",
   "extends": [
     "config:recommended",
     "monorepo:turbo"
