@@ -1,0 +1,18 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": [
+		"config:recommended",
+		":dependencyDashboard",
+		":semanticPrefixFixDepsChoreOthers",
+		":ignoreModulesAndTests",
+		"group:monorepos",
+		"group:recommended",
+		"replacements:all",
+		"workarounds:all",
+		"npm:unpublishSafe",
+		"monorepo:turbo"
+	],
+	"baseBranches": [
+		"main"
+	]
+}
