@@ -1,18 +1,24 @@
 {
-	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
-	"extends": [
-		"config:recommended",
-		":dependencyDashboard",
-		":semanticPrefixFixDepsChoreOthers",
-		":ignoreModulesAndTests",
-		"group:monorepos",
-		"group:recommended",
-		"replacements:all",
-		"workarounds:all",
-		"npm:unpublishSafe",
-		"monorepo:turbo"
-	],
-	"baseBranches": [
-		"main"
-	]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "monorepo:turbo"
+  ],
+  "baseBranches": [
+    "main"
+  ],
+  "packageRules": [
+    {
+      "groupName": "Shared",
+      "matchFileNames": [
+        "packages/**"
+      ]
+    },
+    {
+      "groupName": "Apps packages",
+      "matchFileNames": [
+        "apps/**"
+      ]
+    }
+  ]
 }
